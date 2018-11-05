@@ -1,17 +1,18 @@
-FROM python
-ENV PYTHONUNBUFFERED 1
+FROM alpine
 
-# Copy over web-app asset files to /static
-ADD . django/
-RUN chmod -R 777 django/
-RUN mkdir -p django/static/
-COPY manage.py /django/manage.py
-COPY django/static/ /static
-WORKDIR django/
+# Initialize
+RUN mkdir -p /data/web
+WORKDIR /data/web
+COPY requirements.txt /data/web/
 
-# Setup Python env and packages
-RUN pip3 install --upgrade -r requirements.txt
+# Setup
+RUN rm /etc/nginx/sites-enabled/default
+ADD nginx/ /etc/nginx/sites-enabled
 
-RUN python -m nltk.downloader punkt
-RUN python -m nltk.downloader wordnet
-RUN python -m nltk.downloader averaged_perceptron_tagger
+# Install Server Packages
+RUN apk add --update python3 python3-dev python3-pip postgresql-client postgresql-dev build-base
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt
+
+# Prepare
+COPY . /data/web/
